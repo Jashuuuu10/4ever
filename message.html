@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Special Message 💖</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background: radial-gradient(circle at top right, #8b5cf6, #c084fc, #000);
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+      color: white;
+      overflow: hidden;
+      text-align: center;
+      animation: fadeIn 1.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    h2 {
+      font-size: 2.3rem;
+      color: #ffb6c1;
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+      animation: glow 3s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 20px #ff80bf, 0 0 40px #ff66cc; }
+      50% { text-shadow: 0 0 40px #ff99cc, 0 0 60px #ff66cc; }
+    }
+
+    .message-line {
+      font-size: 1.4rem;
+      opacity: 0;
+      transform: translateY(20px);
+      margin: 10px 0;
+      animation: fadeUp 1.5s ease forwards;
+      z-index: 2;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .continue-btn {
+      margin-top: 60px;
+      padding: 14px 40px;
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 50px;
+      background: rgba(255,255,255,0.1);
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: all 0.3s ease;
+      opacity: 0;
+      text-decoration: none;
+      pointer-events: none;
+      animation: showBtn 1s ease forwards;
+      animation-delay: 6.5s;
+      z-index: 2;
+    }
+
+    @keyframes showBtn {
+      to { opacity: 1; pointer-events: all; transform: scale(1); }
+    }
+
+    .continue-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- include script on every page -->
+<script src="music.js"></script>
+
+
+  <!-- Hearts Canvas -->
+  <canvas id="heartCanvas"></canvas>
+
+  <h2>💌 A Little Message Before You Go 💌</h2>
+
+  <div class="message">
+    <p class="message-line" style="animation-delay: 0.5s">Every heartbeat beside you feels like a spell of starlight. ✨ </p>
+    <p class="message-line" style="animation-delay: 2s">You weave laughter into my days and love into my soul. 💖</p>
+    <p class="message-line" style="animation-delay: 3.5s">For today and always, let your smile outshine the sun. 🙈❤️</p>
+  </div>
+
+<a href="game1.html" class="continue-btn">Continue →</a>
+
+  <script>
+    // 🎨 Super-smooth Canvas hearts
+    const canvas = document.getElementById("heartCanvas");
+    const ctx = canvas.getContext("2d");
+    let hearts = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // Create heart shape
+    function drawHeart(x, y, size, opacity) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(size, size);
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.bezierCurveTo(-2, -4, -4, -1, 0, 3);
+      ctx.bezierCurveTo(4, -1, 2, -4, 0, -2);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(255, 182, 193, ${opacity})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Initialize hearts
+    const totalHearts = 20;
+    for (let i = 0; i < totalHearts; i++) {
+      hearts.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 0.8 + Math.random() * 1.5,
+        speed: 0.3 + Math.random() * 0.6,
+        opacity: 0.5 + Math.random() * 0.5,
+        drift: (Math.random() - 0.5) * 0.6
+      });
+    }
+
+    // Animate
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hearts.forEach(h => {
+        drawHeart(h.x, h.y, h.size, h.opacity);
+        h.y -= h.speed;
+        h.x += h.drift;
+        if (h.y < -10) {
+          h.y = canvas.height + 10;
+          h.x = Math.random() * canvas.width;
+        }
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+
+</body>
+</html>

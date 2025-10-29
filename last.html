@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Surprise — Happy Birthday!</title>
+<style>
+  :root{
+    --accent:#ff6b9d;
+    --accent-2:#ffd26a;
+    --bg:#080316;
+    --card-bg: rgba(255,255,255,0.98);
+    --glass: rgba(255,255,255,0.08);
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+  body{
+    background:linear-gradient(180deg,#0b0420 0%, #140824 50%, #0b0420 100%);
+    color: #111;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+
+  /* Video area */
+  .stage {
+    position:relative;
+    width:100%;
+    height:100vh;
+    max-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  video{
+    max-width:100%;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    filter: saturate(1.05) contrast(1.02);
+  }
+
+  /* overlays */
+  .overlay {
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none; /* allow clicks to pass through except boxes */
+  }
+
+  /* Message box */
+  .msg-box {
+    pointer-events:auto;
+    max-width:88%;
+    width:min(760px,92%);
+    background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.96));
+    border-radius:16px;
+    padding:22px 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+    text-align:center;
+    transform: translateY(18px);
+    opacity:0;
+    transition:opacity .5s ease, transform .6s cubic-bezier(.2,.95,.2,1);
+  }
+  .msg-box.show{
+    opacity:1;
+    transform: translateY(0);
+  }
+  .msg-box h2{
+    margin:0 0 8px 0;
+    font-size:clamp(20px,4vw,32px);
+    color:var(--accent);
+    letter-spacing:0.4px;
+  }
+  .msg-box p{
+    margin:0;
+    color:#4b3a40;
+    font-size:clamp(14px,2.2vw,18px);
+    line-height:1.4;
+  }
+
+  /* CTA */
+  .cta {
+    margin-top:14px;
+    display:inline-block;
+    background:linear-gradient(90deg,var(--accent),#ff94b7);
+    color:white;
+    border-radius:40px;
+    padding:12px 26px;
+    font-weight:700;
+    font-size:16px;
+    text-decoration:none;
+    pointer-events:auto;
+    box-shadow:0 8px 30px rgba(255,107,157,0.18);
+    transform: translateY(10px);
+    opacity:0;
+    transition: opacity .45s ease, transform .45s cubic-bezier(.2,.9,.3,1);
+  }
+  .cta.show{
+    opacity:1;
+    transform: translateY(0);
+  }
+
+  /* small secondary box that appears separately (alternate style) */
+  .small-box {
+    position: absolute;
+    bottom:28px;
+    right:18px;
+    background: rgba(255,255,255,0.96);
+    padding:12px 14px;
+    border-radius:12px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.25);
+    font-weight:600;
+    pointer-events:auto;
+    opacity:0;
+    transform: translateY(10px);
+    transition:opacity .4s ease, transform .4s cubic-bezier(.2,.9,.3,1);
+  }
+  .small-box.show{ opacity:1; transform: translateY(0); }
+
+  /* fireworks canvas sits above video but behind boxes */
+  #fireworks {
+    position:absolute;
+    inset:0;
+    z-index:20;
+    pointer-events:none;
+  }
+
+  /* mobile tweaks */
+  @media (max-width:520px){
+    .msg-box{ padding:18px; border-radius:14px;}
+    .msg-box h2{ font-size:20px;}
+    .small-box{ right:12px; bottom:12px; padding:10px 12px; font-size:14px;}
+    .cta{ padding:10px 18px; font-size:15px;}
+  }
+</style>
+</head>
+<body>
+      <!-- include script on every page -->
+<script src="music.js"></script>
+
+
+<div class="stage">
+  <!-- Replace video.mp4 with your filename -->
+  <video id="mainVideo" src="fire.mov" playsinline muted autoplay tabindex="-1"></video>
+
+  <!-- fireworks canvas -->
+  <canvas id="fireworks"></canvas>
+
+  <!-- overlay for boxes -->
+  <div class="overlay" aria-hidden="false">
+    <div id="msgWrap" style="pointer-events:none">
+      <div class="msg-box" id="specialMsg" role="dialog" aria-live="polite">
+        <h2>Your Different,Your Special✨</h2>
+        <p id="specialText">Manisha — I Love You❤️. <b>THEN,NOW,FOREVER</b></div> </p>
+        <div style="height:6px"></div>
+        <a id="ctaLink" class="cta" role="button" aria-label="Send on WhatsApp" target="_blank" rel="noopener noreferrer">Click here</a>
+      </div>
+    </div>
+
+    <div id="smallBox" class="small-box" role="button" aria-hidden="true">
+      🎆 View Fireworks
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  last.html behaviour:
+  - After 5s: show #specialMsg (message box).
+  - After 2s more: show CTA (.cta) and small box; start fireworks animation.
+  - CTA opens WhatsApp (replace number/message).
+  - Video left playing (muted). Clicking CTA pauses video optionally.
+*/
+
+// --- Config: replace phone/message below ---
+const whatsappPhone = '7780566767'; // e.g. 15551234567 (country code + number, no + or dashes)
+const prefillMessage = encodeURIComponent(""); // customize
+
+const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${prefillMessage}`;
+
+const specialMsg = document.getElementById('specialMsg');
+const cta = document.getElementById('ctaLink');
+const smallBox = document.getElementById('smallBox');
+const canvas = document.getElementById('fireworks');
+const video = document.getElementById('mainVideo');
+
+cta.href = whatsappUrl;
+
+// Safety: if user hasn't replaced number, default to open WhatsApp home
+if (whatsappPhone === 'YOUR_PHONE_NUMBER') {
+  cta.href = 'https://wa.me/';
+  cta.title = 'Replace phone in code to open direct chat';
+}
+
+// show sequence
+const showAfterMs = 5000; // 5 seconds -> show message
+const showCtaDelay = 2000; // after message appears, wait 2s for CTA
+
+setTimeout(()=> {
+  specialMsg.classList.add('show');
+  // after small delay show CTA and small box + start fireworks
+  setTimeout(()=> {
+    cta.classList.add('show');
+    smallBox.classList.add('show');
+    startFireworks();
+  }, showCtaDelay);
+}, showAfterMs);
+
+// Optional: pause video when CTA clicked (uncomment if desired)
+cta.addEventListener('click', () => {
+  try { video.pause(); } catch(e){}
+});
+
+// small box toggles fireworks on/off (click)
+let fireworksRunning = true;
+smallBox.addEventListener('click', () => {
+  fireworksRunning = !fireworksRunning;
+  if (fireworksRunning) {
+    startFireworks();
+    smallBox.textContent = '🎆 View Fireworks';
+  } else {
+    stopFireworks();
+    smallBox.textContent = '🔕 Fireworks Off';
+  }
+});
+
+/* --------- Simple lightweight fireworks on canvas ---------
+   Implementation: create particle explosion bursts at random x positions.
+   Keep it small & mobile-friendly.
+*/
+let ctx, W, H, raf;
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = W = window.innerWidth;
+  canvas.height = H = window.innerHeight;
+  if (ctx) ctx = canvas.getContext('2d');
+}
+window.addEventListener('resize', resizeCanvas, {passive:true});
+ctx = canvas.getContext('2d');
+resizeCanvas();
+
+function random(min,max){ return Math.random()*(max-min)+min; }
+
+function createBurst(x, y, color) {
+  const count = 18 + Math.floor(Math.random()*12);
+  for (let i=0;i<count;i++){
+    const angle = Math.PI*2*(i/count) + (Math.random()-0.5)*0.6;
+    const speed = random(2.5,6.5);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      life: 900 + Math.random()*800,
+      age: 0,
+      size: 2 + Math.random()*4,
+      color,
+      gravity: 0.02 + Math.random()*0.06
+    });
+  }
+}
+
+function launchRandomFirework() {
+  // Launch from lower area, explode near upper half
+  const startX = random(0.15*W, 0.85*W);
+  const startY = H + 20;
+  const peakY = random(H*0.18, H*0.5);
+  // create a rocket effect: animate a little upward trail, then burst.
+  const rocket = {
+    x: startX, y: startY, vy: -random(5,8), life: 400 + random(200,600), age: 0,
+    color: getRandomColor()
+  };
+  rockets.push(rocket);
+}
+
+function getRandomColor() {
+  const palette = ['#ff94b7','#ff6fa7','#ffc1d9','#ffd26a','#a78bfa','#6bcf7f','#4d96ff'];
+  return palette[Math.floor(Math.random()*palette.length)];
+}
+
+let rockets = [];
+let lastLaunch = 0;
+
+function step(t) {
+  ctx.clearRect(0,0,W,H);
+
+  // rockets move upward; when age > life -> burst
+  for (let i = rockets.length-1; i>=0; i--){
+    const r = rockets[i];
+    r.age += 16;
+    r.vy += 0.05; // slight gravity reverse
+    r.y += r.vy;
+    // draw rocket dot/trail
+    ctx.beginPath();
+    ctx.fillStyle = r.color;
+    ctx.globalAlpha = 1;
+    ctx.arc(r.x, r.y, 3, 0, Math.PI*2);
+    ctx.fill();
+    // trail
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(r.x-1, r.y+6, 2, 6);
+
+    if (r.age >= r.life || r.y < H*0.25) {
+      createBurst(r.x, r.y, r.color);
+      rockets.splice(i,1);
+    }
+  }
+
+  // particles update
+  for (let i = particles.length-1; i>=0; i--){
+    const p = particles[i];
+    p.age += 16;
+    p.vy += p.gravity;
+    p.x += p.vx;
+    p.y += p.vy;
+    const lifeRatio = 1 - p.age / p.life;
+    if (lifeRatio <= 0) {
+      particles.splice(i,1);
+      continue;
+    }
+    // draw
+    ctx.beginPath();
+    ctx.globalAlpha = Math.max(0, lifeRatio);
+    ctx.fillStyle = p.color;
+    ctx.arc(p.x, p.y, p.size * lifeRatio, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // occasionally launch rockets
+  if (Date.now() - lastLaunch > 420 + Math.random()*800) {
+    if (fireworksRunning) {
+      launchRandomFirework();
+    }
+    lastLaunch = Date.now();
+  }
+
+  // loop
+  raf = requestAnimationFrame(step);
+}
+
+function startFireworks() {
+  if (raf) return; // already running
+  fireworksRunning = true;
+  // kick off
+  lastLaunch = 0;
+  raf = requestAnimationFrame(step);
+}
+
+function stopFireworks() {
+  fireworksRunning = false;
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+  // clear particles & rockets visually
+  particles = [];
+  rockets = [];
+  ctx.clearRect(0,0,W,H);
+}
+
+// start paused; we begin when CTA shows (already started above when CTA added). 
+// Keep a small safety: if CTA present and fireworks not running, start them:
+setInterval(()=> {
+  if (cta.classList.contains('show') && !raf && fireworksRunning) startFireworks();
+}, 800);
+
+// ensure canvas size correct
+resizeCanvas();
+
+</script>
+</body>
+</html>
