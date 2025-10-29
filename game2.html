@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎈 Catch the Photos 🎉</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    height:100%;
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#ff6b6b 0%,#ffd93d 30%,#6bcf7f 60%,#4d96ff 100%);
+    background-size:400% 400%;
+    animation:grad 15s linear infinite;
+    overflow:hidden;
+  }
+  @keyframes grad{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+  /* Loading Screen */
+  #loadingOverlay{
+    position:fixed;inset:0;
+    background:rgba(255,255,255,0.9);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:300;
+    text-align:center;
+    color:#ff6b6b;
+    font-weight:600;
+  }
+  .loader{
+    width:60px;height:60px;
+    border:6px solid rgba(255,107,107,0.3);
+    border-top-color:#ff6b6b;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+    margin-bottom:20px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Start Overlay */
+  #startOverlay{
+    position:fixed;inset:0;
+    background:linear-gradient(135deg,rgba(255,107,107,0.98),rgba(255,217,61,0.98));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:200;
+    color:white;text-align:center;padding:20px;
+    backdrop-filter:blur(6px);
+    /* start hidden, will be shown once loading finishes */
+    display:none;
+  }
+  #startOverlay h2{
+    font-size:2.5rem;
+    margin-bottom:15px;
+    text-shadow:0 4px 20px rgba(0,0,0,0.3);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  #startOverlay p{
+    font-size:1.1rem;
+    max-width:440px;
+    line-height:1.5;
+    text-shadow:0 2px 10px rgba(0,0,0,0.25);
+  }
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+  /* Header & Stats */
+  .header{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px 6px}
+  h1{color:#fff;font-size:2.6rem;text-shadow:0 6px 20px rgba(0,0,0,0.35);font-weight:800}
+  .stats{display:flex;gap:28px;margin-top:8px}
+  .statItem{background:rgba(255,255,255,0.12);padding:10px 18px;border-radius:22px;color:#fff;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12)}
+
+  /* Game area */
+  #gameArea{
+    width:100%;max-width:1000px;height:68vh;border-radius:28px;margin:20px auto;
+    position:relative;background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(18px);
+    box-shadow:0 20px 60px rgba(0,0,0,0.28);
+    border:3px solid rgba(255,255,255,0.12);
+    overflow:hidden;
+  }
+
+  /* Photos */
+  .photo{
+    position:absolute;
+    width:92px;height:118px;border-radius:12px;
+    overflow:hidden;background:#fff;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    transform-origin:center;
+    animation:floatUp 6s linear forwards;
+    cursor:pointer;user-select:none;
+    border:3px solid rgba(255,255,255,0.85);
+    transition:transform .16s,box-shadow .16s;
+  }
+  .photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo:hover{transform:scale(1.1) rotate(var(--rot));box-shadow:0 18px 46px rgba(0,0,0,0.35);filter:brightness(1.06)}
+  @keyframes floatUp{0%{transform:translateY(100vh) rotate(var(--rot)) scale(1);opacity:1}70%{opacity:1}100%{transform:translateY(-160px) rotate(calc(var(--rot)+8deg)) scale(1.06);opacity:0}}
+  @keyframes popAnim{0%{transform:scale(1);opacity:1}100%{transform:scale(1.8);opacity:0}}
+
+  /* Confetti */
+  .confetti{position:absolute;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.2s linear forwards;z-index:40}
+  @keyframes confettiFall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(140px) rotate(720deg);opacity:0}}
+
+  /* Floating score */
+  .scorePop{position:fixed;font-weight:800;color:#fff;text-shadow:0 4px 16px rgba(0,0,0,0.5);pointer-events:none;animation:scoreFloat 1s ease-out forwards}
+  @keyframes scoreFloat{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-80px) scale(1.35);opacity:0}}
+
+  .endMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.9);border-radius:20px;color:#ff6b6b;font-size:1.6rem;font-weight:700;z-index:60}
+
+  #nextBtn{display:none;margin:18px auto;padding:12px 30px;border-radius:28px;border:none;background:#ff6b6b;color:#fff;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,0.2);cursor:pointer;}
+
+  @media(max-width:700px){.photo{width:78px;height:100px}.stats{gap:14px}h1{font-size:2rem}}
+</style>
+</head>
+<body>
+    <!-- include script on every page -->
+<script src="music.js"></script>
+
+
+<!-- Loading overlay -->
+<div id="loadingOverlay">
+  <div class="loader"></div>
+  <p>Loading photos... please wait 💖</p>
+</div>
+
+<!-- Start overlay -->
+<div id="startOverlay">
+  <h2>Nen nek life long iche gifts!🌝</h2>
+  <p>Tap anywhere to begin. Click a photo to collect it.</p>
+</div>
+
+<div class="header">
+  <h1>Catch the Gifts</h1>
+  <div class="stats">
+    <div class="statItem">🎯 Score: <span id="score">0</span></div>
+    <div class="statItem">🔥 Combo: <span id="combo">0</span></div>
+    <div class="statItem">⏰ Time: <span id="time">30</span>s</div>
+  </div>
+</div>
+
+<div id="gameArea"></div>
+
+<button id="nextBtn">Next →</button>
+
+<script>
+/* CONFIG - update image names if needed */
+const IMG_SOURCES=['1.jpeg','2.jpeg','3.jpeg','4.JPEG','5.jpeg','6.jpeg'];
+const START_TIME=30, WIN_SCORE=20, MAX_ACTIVE_PHOTOS=8;
+
+/* STATE */
+let score=0, combo=0, maxCombo=0, timeLeft=START_TIME;
+let timerInterval, spawnTimer, comboTimeout, difficulty=1;
+
+const gameArea=document.getElementById('gameArea');
+const scoreEl=document.getElementById('score');
+const comboEl=document.getElementById('combo');
+const timeEl=document.getElementById('time');
+const nextBtn=document.getElementById('nextBtn');
+const loadingOverlay=document.getElementById('loadingOverlay');
+const startOverlay=document.getElementById('startOverlay');
+
+/* --- Preload images, then show start overlay --- */
+Promise.all(IMG_SOURCES.map(src=>new Promise(res=>{
+  const img=new Image();
+  img.onload = () => res();
+  img.onerror = () => res(); // resolve on error to avoid hang
+  img.src = src;
+}))).then(()=>{
+  // fade out loader then show start overlay
+  loadingOverlay.style.transition = 'opacity 400ms ease';
+  loadingOverlay.style.opacity = '0';
+  setTimeout(()=>loadingOverlay.remove(), 420);
+  startOverlay.style.display = 'flex';
+});
+
+/* HELPERS */
+function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function randomImage(){return IMG_SOURCES[Math.floor(Math.random()*IMG_SOURCES.length)];}
+function randomRot(){return ((Math.random()*18)-9)+'deg';}
+
+/* CREATE PHOTO */
+function createPhoto(){
+  if(document.querySelectorAll('.photo').length >= MAX_ACTIVE_PHOTOS) return;
+  const card = document.createElement('div');
+  card.className = 'photo';
+  card.style.left = (5 + Math.random()*90) + '%';
+  card.style.setProperty('--rot', randomRot());
+  const animDur = (4 + Math.random()*3) / Math.max(1, difficulty/1.1);
+  card.style.animationDuration = animDur + 's';
+
+  const img = document.createElement('img');
+  img.src = randomImage();
+  img.alt = 'memory';
+  card.appendChild(img);
+
+  card.addEventListener('click', e=>{
+    e.stopPropagation();
+    collectPhoto(card);
+  });
+
+  gameArea.appendChild(card);
+  setTimeout(()=>{ if(card.parentElement) card.remove(); }, (animDur*1000)+400);
+}
+
+/* SHOW FLOATING SCORE */
+function showFloatingScore(rect, points){
+  const el = document.createElement('div');
+  el.className = 'scorePop';
+  el.textContent = '+' + points;
+  el.style.left = (rect.left + rect.width/2) + 'px';
+  el.style.top = (rect.top - 8) + 'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1000);
+}
+
+/* SPARKLES */
+function createSparkles(rect, count=8){
+  for(let i=0;i<count;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = (rect.left + rect.width/2 + (Math.random()*80-40)) + 'px';
+    c.style.top = (rect.top + rect.height/2 + (Math.random()*40-20)) + 'px';
+    const palette = ['#ff6b6b','#ffd93d','#6bcf7f','#4d96ff','#ff8e53','#a78bfa'];
+    c.style.background = palette[Math.floor(Math.random()*palette.length)];
+    c.style.animationDuration = (0.8 + Math.random()*0.9) + 's';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 1400);
+  }
+}
+
+/* COLLECT A PHOTO */
+function collectPhoto(card){
+  if(!card.parentElement) return;
+  const rect = card.getBoundingClientRect();
+
+  card.style.animation = 'popAnim .45s ease-out forwards';
+  createSparkles(rect, 10);
+
+  // combo logic
+  combo++; if(combo > maxCombo) maxCombo = combo;
+  comboEl.textContent = combo;
+  if(comboTimeout) clearTimeout(comboTimeout);
+  comboTimeout = setTimeout(()=>{ combo = 0; comboEl.textContent = 0; }, 2000);
+
+  const points = 1 + Math.floor(combo/3);
+  score += points; scoreEl.textContent = score;
+  showFloatingScore(rect, points);
+
+  setTimeout(()=>{ if(card.parentElement) card.remove(); }, 420);
+
+  if(score >= WIN_SCORE) endGame(true);
+}
+
+/* SPAWN LOOP */
+function spawnLoop(){
+  createPhoto();
+  const base = 700;
+  const delay = Math.max(320, base/difficulty + (Math.random()*200-100));
+  spawnTimer = setTimeout(spawnLoop, delay);
+}
+
+/* START GAME */
+function startGame(){
+  startOverlay.style.display = 'none';
+  timerInterval = setInterval(()=>{
+    timeLeft--; timeEl.textContent = timeLeft;
+    if(timeLeft <= 20) difficulty = 1.25;
+    if(timeLeft <= 10) difficulty = 1.6;
+    if(timeLeft <= 5) difficulty = 2.1;
+    if(timeLeft <= 0) endGame(false);
+  }, 1000);
+  spawnLoop();
+  for(let i=0;i<3;i++) setTimeout(createPhoto, i*200);
+}
+
+/* END GAME */
+function endGame(won){
+  clearInterval(timerInterval);
+  clearTimeout(spawnTimer);
+  clearTimeout(comboTimeout);
+  document.querySelectorAll('.photo').forEach(p=>p.remove());
+
+  const msg = document.createElement('div');
+  msg.className = 'endMsg';
+  msg.innerHTML = won ? `🎉 Amazing! You scored ${score} points!` : `⏰ Time's up — you scored ${score}.`;
+  gameArea.appendChild(msg);
+
+  // Confetti burst
+  for(let i=0;i<60;i++){
+    setTimeout(()=>{
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random()*100 + '%';
+      c.style.top = (20 + Math.random()*60) + '%';
+      const palette = ['#ff6b6b','#ffd93d','#6bcf7f','#4d96ff','#ff8e53','#a78bfa'];
+      c.style.background = palette[Math.floor(Math.random()*palette.length)];
+      c.style.animationDuration = (1 + Math.random()) + 's';
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(), 2500);
+    }, i*20);
+  }
+
+  // show next button and ensure it's visible on small screens
+  nextBtn.style.display = 'block';
+  nextBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* START / NEXT LISTENERS */
+document.body.addEventListener('pointerdown', ()=>{ if(startOverlay.style.display !== 'none') startGame(); }, { once:true });
+
+nextBtn.addEventListener('click', ()=>{
+  // fade and navigate
+  document.body.style.transition = 'opacity .6s';
+  document.body.style.opacity = '0';
+  setTimeout(()=> {
+    // make sure file exists on server exactly as named:
+    window.location.href = 'game3.html';
+  }, 700);
+});
+</script>
+</body>
+</html>

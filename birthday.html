@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy Birthday</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+      background: black;
+      position: relative;
+    }
+
+    /* --- Background Video --- */
+    video#bgVideo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.55) blur(1px);
+    }
+
+    /* --- Main Content --- */
+    .content {
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+
+    .content.show {
+      opacity: 1;
+    }
+
+    h1 {
+      font-size: 60px;
+      font-weight: 700;
+      color: lightpink;
+      text-align: center;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px rgba(255, 182, 193, 0.7),
+                   0 0 30px rgba(255, 182, 193, 0.4);
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.85);
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    /* --- Carousel --- */
+    .scene-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 1000px;
+      gap: 30px;
+    }
+
+    .scene {
+      width: 100%;
+      height: 500px;
+      perspective: 1800px;
+      position: relative;
+      touch-action: pan-y;
+    }
+
+    .carousel {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      transform-style: preserve-3d;
+      transition: transform 1s ease-in-out;
+    }
+
+    .photo-card {
+      position: absolute;
+      width: 220px;
+      height: 280px;
+      left: 50%;
+      top: 50%;
+      margin-left: -110px;
+      margin-top: -140px;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .photo-card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.3, 1);
+    }
+
+    .photo-front, .photo-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .photo-front img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .photo-back {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transform: rotateY(180deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    /* --- Navigation Buttons --- */
+    .nav-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-top: 25px;
+      position: relative;
+    }
+
+    .nav-btn {
+      padding: 14px 32px;
+      border-radius: 50px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 192, 203, 0.3);
+      box-shadow: 0 0 15px pink;
+      transform: scale(1.05);
+    }
+
+    .indicator {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 15px;
+      min-width: 60px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 40px; }
+      .subtitle { font-size: 14px; margin-bottom: 30px; }
+      .photo-card { width: 160px; height: 200px; margin-left: -80px; margin-top: -100px; }
+      .photo-back { font-size: 15px; padding: 20px; }
+      .nav-btn { padding: 10px 22px; font-size: 14px; }
+      .scene { height: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- include script on every page -->
+  <script src="music.js"></script>
+
+  <!-- Background Video -->
+  <video id="bgVideo" autoplay muted loop playsinline>
+    <source src="vid.mp4" type="video/mp4">
+  </video>
+
+  <!-- Main Content -->
+  <div class="content show" id="mainContent">
+    <h1>🌸 memories 🌸</h1>
+    <p class="subtitle">Swipe and tap to explore my special memories 💕</p>
+    <p class="subtitle"> So many special pics andulo ivi inka special ❤️</p>
+
+    <div class="scene-container">
+      <div class="scene" id="sceneArea">
+        <div class="carousel" id="carousel"></div>
+      </div>
+
+      <div class="nav-container">
+        <button class="nav-btn" id="prevBtn">← Prev</button>
+        <span class="indicator" id="indicator">1 / 8</span>
+        <button class="nav-btn" id="nextBtn">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 🎠 Carousel logic
+    const carousel = document.getElementById('carousel');
+    const sceneArea = document.getElementById('sceneArea');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const indicator = document.getElementById('indicator');
+
+    const images = ["m0.JPG","m.JPG","m1.JPG","m2.jpg","m3.JPG","m4.JPG","m6.jpeg","m7.JPG"];
+    const messages = [
+      "💖 Na Baby.. Na life loki vastake puttinatuu vunnave 💖",
+      "✨ Ee pic chusina aa sec eh nek nen yentha la love lo padipoya ante malli back ki vache way marchipoya ✨",
+      "💕 Na wife inta beautiful ga vuntadi ani chupinchina pic idi 💕",
+      "🌸 Aa day ne saree look meda expectations were too high and u never dissappointed me that day 🌸",
+      "🙈 Aa 3 days u were something magical. nen asala melt aipoyaaa 🙈",
+      "😍 Na cutiee bangarammm yenduko telidu chala istam ee pic 😍",
+      "❤️ Na phone lo Nen tisina nee first pic so forever special one ❤️",
+      "💘 Na muddulaa pellamm meru chala beautiful bangarammm 💘"
+    ];
+
+    const n = images.length;
+    const theta = 360 / n;
+    const radius = window.innerWidth < 768 ? 250 : 380;
+    let currentIndex = 0;
+    let clickedCards = new Set();
+
+    // Touch/swipe variables
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let isSwiping = false;
+
+    images.forEach((src, i) => {
+      const card = document.createElement('div');
+      card.className = 'photo-card';
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
+
+      const front = document.createElement('div');
+      front.className = 'photo-front';
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = `Memory ${i + 1}`;
+      front.appendChild(img);
+
+      const back = document.createElement('div');
+      back.className = 'photo-back';
+      back.textContent = messages[i];
+
+      inner.appendChild(front);
+      inner.appendChild(back);
+      card.appendChild(inner);
+      carousel.appendChild(card);
+
+      const angle = theta * i;
+      card.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`;
+
+      card.addEventListener('click', (e) => {
+        if (!isSwiping) {
+          card.classList.toggle('flipped');
+          clickedCards.add(i);
+
+          if (clickedCards.size === n) {
+            setTimeout(showCongratsBox, 1000);
+          }
+        }
+      });
+    });
+
+    function updateCarousel() {
+      const angle = currentIndex * -theta;
+      carousel.style.transform = `rotateY(${angle}deg)`;
+      indicator.textContent = `${currentIndex + 1} / ${n}`;
+    }
+
+    function goNext() {
+      currentIndex = (currentIndex + 1) % n;
+      updateCarousel();
+    }
+
+    function goPrev() {
+      currentIndex = (currentIndex - 1 + n) % n;
+      updateCarousel();
+    }
+
+    nextBtn.addEventListener('click', goNext);
+    prevBtn.addEventListener('click', goPrev);
+
+    // Touch event handlers for swipe
+    sceneArea.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      isSwiping = false;
+    }, { passive: true });
+
+    sceneArea.addEventListener('touchmove', (e) => {
+      const moveX = e.changedTouches[0].screenX;
+      if (Math.abs(moveX - touchStartX) > 10) {
+        isSwiping = true;
+      }
+    }, { passive: true });
+
+    sceneArea.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const swipeThreshold = 50;
+      const diff = touchStartX - touchEndX;
+
+      if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+          // Swiped left - go to next
+          goNext();
+        } else {
+          // Swiped right - go to previous
+          goPrev();
+        }
+      }
+      
+      // Reset swiping flag after a short delay
+      setTimeout(() => {
+        isSwiping = false;
+      }, 100);
+    }
+
+    function showCongratsBox() {
+      if (document.getElementById("congratsBox")) return;
+      const box = document.createElement("div");
+      box.id = "congratsBox";
+      box.innerHTML = `
+        <div class="box-content">
+          <h2> Na pellam too Beautifull 🙈❤️</h2>
+          <p> now let's celebrate! 🎂</p>
+          <button id="continueBtn">Continue →</button>
+        </div>
+      `;
+      document.body.appendChild(box);
+
+      const style = document.createElement('style');
+      style.textContent = `
+        #congratsBox {
+          position: fixed;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 2000;
+          animation: fadeInBox 0.8s ease;
+        }
+        .box-content {
+          background: rgba(255,255,255,0.1);
+          border: 2px solid pink;
+          backdrop-filter: blur(10px);
+          color: white;
+          padding: 40px 50px;
+          border-radius: 20px;
+          text-align: center;
+          max-width: 400px;
+          box-shadow: 0 0 20px rgba(255,192,203,0.6);
+          animation: popUp 0.6s ease;
+        }
+        .box-content h2 {
+          color: pink;
+          margin-bottom: 10px;
+        }
+        .box-content p {
+          font-size: 16px;
+          margin-bottom: 20px;
+        }
+        .box-content button {
+          background: pink;
+          color: black;
+          border: none;
+          border-radius: 30px;
+          padding: 10px 30px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+        .box-content button:hover {
+          background: hotpink;
+          color: white;
+          transform: scale(1.05);
+        }
+        @keyframes popUp {
+          from { transform: scale(0.8); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeInBox {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      document.getElementById("continueBtn").addEventListener("click", () => {
+        window.location.href = "countdown.html";
+      });
+    }
+  </script>
+</body>
+</html>

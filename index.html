@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome 💖</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background: radial-gradient(circle at bottom left, #c084fc, #9333ea, #000);
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+      color: white;
+      overflow: hidden;
+      text-align: center;
+      animation: fadeIn 1.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    h1 {
+      font-size: 3rem;
+      letter-spacing: 2px;
+      color: #ffd1dc;
+      text-shadow: 0 0 25px rgba(255,192,203,0.8), 0 0 50px rgba(255,192,203,0.5);
+      margin-bottom: 15px;
+      animation: glow 3s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 20px #ff80bf, 0 0 40px #ff66cc; }
+      50% { text-shadow: 0 0 40px #ff99cc, 0 0 60px #ff66cc; }
+    }
+
+    p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-bottom: 50px;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .enter-btn {
+      padding: 14px 40px;
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 50px;
+      background: rgba(255,255,255,0.1);
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: all 0.4s ease;
+      text-decoration: none;
+      z-index: 2;
+    }
+
+    .enter-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- include script on every page -->
+<script src="music.js"></script>
+
+<!-- Music Overlay (shows on page load) -->
+
+
+  <!-- Floating Hearts Canvas -->
+  <canvas id="heartCanvas"></canvas>
+
+  <h1>🎂 Welcome Bangaram To Your Special Day 🎂</h1>
+  <p> Na bangaram, This is for you.. 😘</p>
+  <p> Click on play music and press enter  </p>
+  <a href="message.html" class="enter-btn">Enter</a>
+
+  <script>
+    // 💕 Smooth Canvas Hearts (same as message page)
+    const canvas = document.getElementById("heartCanvas");
+    const ctx = canvas.getContext("2d");
+    let hearts = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    function drawHeart(x, y, size, opacity) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(size, size);
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.bezierCurveTo(-2, -4, -4, -1, 0, 3);
+      ctx.bezierCurveTo(4, -1, 2, -4, 0, -2);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(255, 182, 193, ${opacity})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const totalHearts = 20;
+    for (let i = 0; i < totalHearts; i++) {
+      hearts.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 0.8 + Math.random() * 1.5,
+        speed: 0.3 + Math.random() * 0.6,
+        opacity: 0.5 + Math.random() * 0.5,
+        drift: (Math.random() - 0.5) * 0.6
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hearts.forEach(h => {
+        drawHeart(h.x, h.y, h.size, h.opacity);
+        h.y -= h.speed;
+        h.x += h.drift;
+        if (h.y < -10) {
+          h.y = canvas.height + 10;
+          h.x = Math.random() * canvas.width;
+        }
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+
+</body>
+</html>

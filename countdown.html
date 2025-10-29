@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Moment 💫</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background: radial-gradient(circle at center, #8b5cf6, #4b0082, #000);
+      color: white;
+      font-family: 'Poppins', 'Segoe UI', sans-serif;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      letter-spacing: 2px;
+      animation: glow 3s ease-in-out infinite;
+      margin-bottom: 30px;
+    }
+
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 20px #ff80bf, 0 0 40px #ff66cc; }
+      50% { text-shadow: 0 0 40px #ff99cc, 0 0 60px #ff66cc; }
+    }
+
+    .count {
+      font-size: 5rem;
+      font-weight: 700;
+      color: #ffb6c1;
+      text-shadow: 0 0 30px rgba(255,182,193,0.8);
+      animation: scaleUp 1s ease-in-out infinite;
+    }
+
+    @keyframes scaleUp {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.8; }
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .text {
+      font-size: 1.2rem;
+      margin-top: 20px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background music -->
+  <script src="music.js"></script>
+
+  <canvas id="heartCanvas"></canvas>
+
+  <h1>💫 The Moment is Almost Here 💫</h1>
+  <div class="count" id="count">20</div>
+  <p class="text">Make a Wish ❤️</p>
+
+  <script>
+    // Floating Hearts Background
+    const canvas = document.getElementById("heartCanvas");
+    const ctx = canvas.getContext("2d");
+    let hearts = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    function drawHeart(x, y, size, opacity) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(size, size);
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.bezierCurveTo(-2, -4, -4, -1, 0, 3);
+      ctx.bezierCurveTo(4, -1, 2, -4, 0, -2);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(255, 182, 193, ${opacity})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const totalHearts = 20;
+    for (let i = 0; i < totalHearts; i++) {
+      hearts.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 0.8 + Math.random() * 1.2,
+        speed: 0.3 + Math.random() * 0.6,
+        opacity: 0.5 + Math.random() * 0.5,
+        drift: (Math.random() - 0.5) * 0.6
+      });
+    }
+
+    function animateHearts() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hearts.forEach(h => {
+        drawHeart(h.x, h.y, h.size, h.opacity);
+        h.y -= h.speed;
+        h.x += h.drift;
+        if (h.y < -10) {
+          h.y = canvas.height + 10;
+          h.x = Math.random() * canvas.width;
+        }
+      });
+      requestAnimationFrame(animateHearts);
+    }
+    animateHearts();
+
+    // Countdown Logic (starts from 20)
+    const countElem = document.getElementById('count');
+    let count = 20;
+
+    const interval = setInterval(() => {
+      count--;
+      countElem.textContent = count;
+
+      if (count === 0) {
+        clearInterval(interval);
+        countElem.textContent = "❤️";
+        setTimeout(() => {
+          document.body.style.transition = "opacity 1s";
+          document.body.style.opacity = 0;
+          setTimeout(() => window.location.href = "cake.html", 1000);
+        }, 1000);
+      }
+    }, 1000);
+  </script>
+
+</body>
+</html>

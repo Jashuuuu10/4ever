@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Memory Match 💞</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 20%, #f9a8d4 40%, #ec4899 60%, #db2777 80%, #be185d 100%);
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    overflow-x: hidden;
+    padding: 20px;
+    position: relative;
+  }
+
+  /* 🌸 Intro Overlay */
+  #introOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 192, 203, 0.95);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    text-align: center;
+    padding: 30px;
+    animation: fadeIn 1s ease;
+  }
+
+  #introOverlay h2 {
+    font-size: 2.5rem;
+    color: #db2777;
+    margin-bottom: 20px;
+    animation: popIn 1s ease;
+  }
+
+  #introOverlay p {
+    font-size: 1.2rem;
+    color: #6b21a8;
+    margin-bottom: 25px;
+    max-width: 450px;
+    line-height: 1.7;
+  }
+
+  #startBtn {
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+    border: none;
+    font-size: 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 0 25px rgba(236,72,153,0.6);
+  }
+
+  #startBtn:hover {
+    background: linear-gradient(135deg, #f472b6, #ec4899);
+    transform: scale(1.08);
+    box-shadow: 0 0 40px rgba(236,72,153,0.8);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes cardAppear {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* 🌈 Main Game */
+  .container { text-align: center; z-index: 1; max-width: 100%; }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #fce7f3, #ffffff, #fce7f3);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease infinite, floatTitle 3s ease-in-out infinite, fadeInUp 0.8s ease;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  @keyframes floatTitle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .subtitle {
+    margin-bottom: 15px;
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    padding: 0 10px;
+    animation: fadeInUp 1s ease 0.2s backwards;
+  }
+
+  .stats {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 25px;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    flex-wrap: wrap;
+    animation: fadeInUp 1s ease 0.4s backwards;
+  }
+
+  .stat-item {
+    background: rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.5);
+    transition: all 0.3s ease;
+  }
+
+  .stat-item:hover {
+    background: rgba(255,255,255,0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(236,72,153,0.3);
+  }
+
+  .stat-value {
+    font-weight: 700;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    color: #fff;
+  }
+
+  .game-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: clamp(8px, 2vw, 15px);
+    justify-content: center;
+    margin: 20px auto;
+    max-width: 500px;
+    padding: 0 10px;
+  }
+
+  .card {
+    width: 100%;
+    aspect-ratio: 0.79;
+    background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+    border: 3px solid rgba(255,192,203,0.8);
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(219,39,119,0.3);
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    animation: cardAppear 0.6s ease backwards;
+  }
+
+  .card::before {
+    content: '💘';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(2rem, 5vw, 3rem);
+    animation: heartbeat 1.5s ease-in-out infinite;
+  }
+
+  @keyframes heartbeat {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+  }
+
+  .card.flipped::before { display: none; }
+
+  .card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+    border-radius: 12px;
+    transition: opacity 0.3s ease;
+  }
+
+  .card.flipped img {
+    display: block;
+    opacity: 1;
+  }
+
+  .card:hover:not(.flipped):not(.matched) {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 12px 30px rgba(219,39,119,0.4);
+  }
+
+  .card.flipped {
+    background: #fff;
+    border-color: rgba(236,72,153,0.8);
+  }
+
+  .card.matched {
+    background: linear-gradient(135deg, #86efac, #4ade80);
+    border-color: rgba(255,255,255,0.8);
+    pointer-events: none;
+    animation: matchCelebrate 0.6s ease-out;
+  }
+
+  .card.matched::before { display: none; }
+
+  .card.matched img {
+    filter: brightness(1.1) saturate(1.2);
+  }
+
+  @keyframes matchCelebrate {
+    0% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.15) rotate(-5deg); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    75% { transform: scale(1.15) rotate(-3deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .controls {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    justify-content: center;
+    animation: fadeInUp 1s ease 0.6s backwards;
+  }
+
+  .control-btn {
+    padding: 12px 25px;
+    font-size: clamp(14px, 2.5vw, 16px);
+    font-weight: 600;
+    border-radius: 25px;
+    color: white;
+    border: 2px solid rgba(255,255,255,0.6);
+    background: rgba(236,72,153,0.3);
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .control-btn:hover {
+    background: rgba(236,72,153,0.5);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(236,72,153,0.4);
+  }
+
+  .control-btn:active {
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  /* 🎉 Victory Modal */
+  #victoryModal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .modal-content {
+    background: linear-gradient(135deg, #fce7f3, #fbcfe8, #f9a8d4);
+    border-radius: 30px;
+    padding: 40px;
+    text-align: center;
+    max-width: 90%;
+    width: 450px;
+    box-shadow: 0 20px 60px rgba(236,72,153,0.6);
+    animation: modalSlideIn 0.6s ease;
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      transform: translateY(-100px) scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .modal-content h2 {
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    color: #db2777;
+    margin-bottom: 20px;
+    animation: popIn 0.8s ease;
+  }
+
+  .modal-content p {
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    color: #6b21a8;
+    margin-bottom: 15px;
+  }
+
+  .next-btn {
+    margin-top: 25px;
+    padding: 15px 40px;
+    font-size: clamp(16px, 3vw, 20px);
+    border-radius: 50px;
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 8px 25px rgba(236,72,153,0.6);
+    transition: 0.4s;
+    display: inline-block;
+  }
+
+  .next-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(236,72,153,0.8);
+  }
+
+  .next-btn:active {
+    transform: scale(1.05);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    #introOverlay h2 {
+      font-size: 2rem;
+    }
+
+    #introOverlay p {
+      font-size: 1rem;
+    }
+
+    .game-board {
+      max-width: 100%;
+    }
+
+    .modal-content {
+      padding: 30px 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .game-board {
+      grid-gap: 8px;
+    }
+  }
+</style>
+</head>
+<body>
+  <!-- include script on every page -->
+<script src="music.js"></script>
+
+<!-- 🌸 Intro Overlay -->
+<div id="introOverlay">
+  <h2>💘 Welcome to Memory Match 💘</h2>
+  <p>
+    Match all the pairs of <b>your pictures!</b><br>
+    <br>
+    🎯 Find all pairs to unlock your next surprise.
+  </p>
+  <button id="startBtn">Start Game →</button>
+</div>
+
+<div class="container" id="gameContent" style="opacity:0; pointer-events:none;">
+  <h1>❤️ Memory Match ❤️</h1>
+  <p class="subtitle">Match your photos to continue 💕</p>
+
+  <div class="stats">
+    <div class="stat-item">Moves: <span class="stat-value" id="moves">0</span></div>
+    <div class="stat-item">Matches: <span class="stat-value" id="matches">0/8</span></div>
+    <div class="stat-item">Time: <span class="stat-value" id="timer">0:00</span></div>
+  </div>
+
+  <div class="game-board" id="board"></div>
+
+  <div class="controls">
+    <button class="control-btn" id="resetBtn">🔄 Reset</button>
+  </div>
+</div>
+
+<!-- 🎉 Victory Modal -->
+<div id="victoryModal">
+  <div class="modal-content">
+    <h2>🎉 Great Job! 🎉</h2>
+    <p>You've matched all your memories 💖</p>
+    <a href="game2.html" class="next-btn">Continue →</a>
+  </div>
+</div>
+
+<script>
+  const images = [
+    "img0.JPG", "img1.jpg", "img2.JPG", "img3.JPG",
+    "img4.JPG", "img5.JPG", "img6.JPG", "img7.JPG"
+  ];
+
+  let cards = [...images, ...images];
+  let flippedCards = [];
+  let matchedPairs = 0;
+  let moves = 0;
+  let timerSeconds = 0;
+  let timerInterval = null;
+  let gameStarted = false;
+  let isChecking = false;
+
+  const board = document.getElementById('board');
+  const movesEl = document.getElementById('moves');
+  const matchesEl = document.getElementById('matches');
+  const timerEl = document.getElementById('timer');
+  const resetBtn = document.getElementById('resetBtn');
+  const introOverlay = document.getElementById('introOverlay');
+  const gameContent = document.getElementById('gameContent');
+  const startBtn = document.getElementById('startBtn');
+  const victoryModal = document.getElementById('victoryModal');
+
+  startBtn.addEventListener('click', () => {
+    introOverlay.style.opacity = '0';
+    introOverlay.style.transition = 'opacity 1s';
+    setTimeout(() => {
+      introOverlay.style.display = 'none';
+      gameContent.style.opacity = '1';
+      gameContent.style.pointerEvents = 'auto';
+      gameContent.style.transition = 'opacity 1s';
+    }, 800);
+  });
+
+  function shuffleCards() {
+    cards.sort(() => Math.random() - 0.5);
+  }
+
+  function createBoard() {
+    board.innerHTML = '';
+    shuffleCards();
+
+    cards.forEach((imgSrc, index) => {
+      const card = document.createElement('div');
+      card.classList.add('card');
+      card.dataset.image = imgSrc;
+      card.style.animationDelay = `${index * 0.05}s`;
+
+      const img = document.createElement('img');
+      img.src = imgSrc;
+      img.alt = "Memory Image";
+
+      card.appendChild(img);
+      card.addEventListener('click', () => flipCard(card));
+      board.appendChild(card);
+    });
+  }
+
+  function startTimer() {
+    if (!gameStarted) {
+      gameStarted = true;
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        const mins = Math.floor(timerSeconds / 60);
+        const secs = timerSeconds % 60;
+        timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+  }
+
+  function flipCard(card) {
+    if (isChecking || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+    if (flippedCards.length >= 2) return;
+
+    if (!gameStarted) startTimer();
+
+    card.classList.add('flipped');
+    flippedCards.push(card);
+
+    if (flippedCards.length === 2) {
+      moves++;
+      movesEl.textContent = moves;
+      isChecking = true;
+      setTimeout(checkMatch, 800);
+    }
+  }
+
+  function checkMatch() {
+    const [c1, c2] = flippedCards;
+    if (c1.dataset.image === c2.dataset.image) {
+      c1.classList.add('matched');
+      c2.classList.add('matched');
+      matchedPairs++;
+      matchesEl.textContent = `${matchedPairs}/8`;
+
+      if (matchedPairs === images.length) {
+        clearInterval(timerInterval);
+        setTimeout(() => victoryModal.style.display = 'flex', 600);
+      }
+    } else {
+      c1.classList.remove('flipped');
+      c2.classList.remove('flipped');
+    }
+    flippedCards = [];
+    isChecking = false;
+  }
+
+  resetBtn.addEventListener('click', () => {
+    matchedPairs = 0;
+    moves = 0;
+    flippedCards = [];
+    timerSeconds = 0;
+    gameStarted = false;
+    isChecking = false;
+    clearInterval(timerInterval);
+    movesEl.textContent = '0';
+    matchesEl.textContent = '0/8';
+    timerEl.textContent = '0:00';
+    victoryModal.style.display = 'none';
+    createBoard();
+  });
+
+  createBoard();
+</script>
+</body>
+</html>
